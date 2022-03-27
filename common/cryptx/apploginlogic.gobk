@@ -1,0 +1,89 @@
+package logic
+
+import (
+	"context"
+	"fmt"
+	"google.golang.org/grpc/status"
+	"io/ioutil"
+	"mall/service/user/model"
+	"mall/service/user/rpc/internal/svc"
+	"mall/service/user/rpc/user"
+	"net/http"
+	"strings"
+
+	"github.com/zeromicro/go-zero/core/logx"
+)
+
+type AppLoginLogic struct {
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+	logx.Logger
+}
+
+// UserSession 用户会话信息
+type UserSession struct {
+	OpenID     string `json:"openid"`      //用户唯一标识
+	SessionKey string `json:"session_key"` //会话密钥
+	UnionID    string `json:"unionid"`     //用户在开放平台的唯一标识符，在满足 UnionID 下发条件的情况下会返回，详见 UnionID 机制说明。
+}
+
+const WX_APP_SECRET = "4f6c85c0c6eca1f1016d5bb45f3c16a5"
+
+// Code2session 根据免登授权码获取用户信息
+func (l *AppLoginLogic) Code2session(code, appId, appSecret string) (*UserSession, error) {
+	client := &http.Client{}
+
+	url := "https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code"
+	r := strings.NewReplacer(
+		"APPID", appId,
+		"SECRET", appSecret,
+		"JSCODE", code,
+	)
+
+	var result UserSession
+	req, err := http.NewRequest("GET", r.Replace(url), nil)
+	resp, err := client.Do(req)
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Printf(string(body))
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func NewAppLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppLoginLogic {
+	return &AppLoginLogic{
+		ctx:    ctx,
+		svcCtx: svcCtx,
+		Logger: logx.WithContext(ctx),
+	}
+}
+
+func (l *AppLoginLogic) AppLogin(in *user.AppLoginRequest) (*user.AppLoginResponse, error) {
+	// todo: add your logic here and delete this line
+	session, err := l.Code2session(in.Code, in.AppId, WX_APP_SECRET)
+	if err != nil {
+		return nil, err
+	}
+	res, err := l.svcCtx.UserModel.FindOneByOpenId(session.OpenID)
+	if err != nil {
+		if err == model.ErrNotFound {
+			return nil, status.Error(100, "用户不存在")
+		}
+		return nil, status.Error(500, err.Error())
+	}
+
+	// 判断密码是否正确
+	//password := cryptx.PasswordEncrypt(l.svcCtx.Config.Salt, in.Password)
+	//if password != res.Password {
+	//	return nil, status.Error(100, "密码错误")
+	//}
+
+	return &user.AppLoginResponse{
+		Id:     res.Id,
+		Name:   res.Name,
+		Gender: res.Gender,
+		Mobile: res.Mobile,
+	}, nil
+
+}

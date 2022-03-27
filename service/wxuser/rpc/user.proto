@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package userclient;
+
+option go_package = "user";
+
+// APP用户登录
+message AppLoginRequest {
+    string AppId = 1;
+    string Code = 2;
+    string Nickname = 3;
+}
+message AppLoginResponse {
+    int64 Id = 1;
+    string Name = 2;
+    int64 Gender = 3;
+    string Mobile = 4;
+    string Nickname = 5;
+    string OpenId = 6;
+}
+// APP用户登录
+
+// 用户信息
+message UserInfoRequest {
+    int64 Id = 1;
+}
+message UserInfoResponse {
+    int64 Id = 1;
+    string Name = 2;
+    int64 Gender = 3;
+    string Mobile = 4;
+    string Nickname = 5;
+    string OpenId = 6;
+}
+// 用户信息
+
+service User {
+    rpc AppLogin(AppLoginRequest) returns(AppLoginResponse);
+    rpc UserInfo(UserInfoRequest) returns(UserInfoResponse);
+}

@@ -1,0 +1,21 @@
+Name: User
+Host: 0.0.0.0
+Port: 8101
+
+Mysql:
+  DataSource: root:123456@tcp(192.168.31.114:3306)/mall?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+
+CacheRedis:
+- Host: 192.168.31.114:6379
+  Pass:
+  Type: node
+
+Auth:
+  AccessSecret: uOvKLmVfztaXGpNYd4Z0I1SiT7MweJhl
+  AccessExpire: 86400
+
+UserRpc:
+  Etcd:
+    Hosts:
+    - 192.168.31.114:2379
+    Key: appuser.rpc

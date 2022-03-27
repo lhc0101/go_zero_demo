@@ -1,0 +1,17 @@
+Name: appuser.rpc
+ListenOn: 192.168.28.209:9100
+
+Etcd:
+  Hosts:
+  - 192.168.31.114:2379
+  Key: appuser.rpc
+
+Mysql:
+  DataSource: root:123456@tcp(192.168.31.114:3306)/mall?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+
+CacheRedis:
+- Host: 192.168.31.114:6379
+  Type: node
+  Pass:
+
+Salt: HWVOFkGgPTryzICwd7qnJaZR9KQ2i8xe
